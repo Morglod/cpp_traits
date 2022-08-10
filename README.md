@@ -12,11 +12,11 @@ Requirements:
 ```cpp
 struct Square {
     int counter = 0;
-    void inc(int x) { counter += x; }
+    void add(int x) { counter += x; }
 };
 
 TRAIT_STRUCT(Addable,
-    TRAIT_METHOD(void, inc, int)
+    TRAIT_METHOD(void, add, int)
 )
 
 void add_10(Addable x) {
