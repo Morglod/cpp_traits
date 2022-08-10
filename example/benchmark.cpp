@@ -5,37 +5,7 @@
 
 #include <cstdlib> // for rand
 
-#include "../traits.hpp"
-
-struct Square {
-    int counter = 0;
-    void add(int x) { counter += x; }
-};
-
-class IAddable {
-public:
-    virtual void add(int x) = 0;
-};
-
-class VSquare : public IAddable {
-public:
-    int counter = 0;
-    void add(int x) override {
-        counter += x;
-    }
-};
-
-TRAIT_STRUCT(Addable,
-    TRAIT_METHOD(void, add, int)
-)
-
-void virtual_add(IAddable* x) {
-    x->add(rand());
-}
-
-void trait_add(Addable& x) {
-    x.add(rand());
-}
+#include "./benchmark_domain.hpp"
 
 static void bench_virtual_add(picobench::state& s)
 {
@@ -47,16 +17,65 @@ static void bench_virtual_add(picobench::state& s)
         virtual_add(iaddable);
     }
 }
-PICOBENCH(bench_virtual_add).iterations({ 1000, 10000, 50000, 100000 });
+PICOBENCH(bench_virtual_add).iterations({ 1000, 10000, 50000 }).samples(1000);
 
 static void bench_trait_add(picobench::state& s)
 {
     Square square;
     Addable taddable(square);
-    s.set_result((uintptr_t)taddable.self);
+    s.set_result((uintptr_t)&taddable);
     
     for (auto _ : s) {
         trait_add(taddable);
     }
 }
-PICOBENCH(bench_trait_add).iterations({ 1000, 10000, 50000, 100000 });
+PICOBENCH(bench_trait_add).iterations({ 1000, 10000, 50000 }).samples(1000);
+
+static void bench_trait2_add(picobench::state& s)
+{
+    Square square;
+    Addable2 taddable(square);
+    s.set_result((uintptr_t)&taddable);
+    
+    for (auto _ : s) {
+        trait2_add(taddable);
+    }
+}
+PICOBENCH(bench_trait2_add).iterations({ 1000, 10000, 50000 }).samples(1000);
+
+
+static void bench_trait3_add(picobench::state& s)
+{
+    Square square;
+    Addable3 taddable(square);
+    s.set_result((uintptr_t)&taddable);
+    
+    for (auto _ : s) {
+        trait3_add(taddable);
+    }
+}
+PICOBENCH(bench_trait3_add).iterations({ 1000, 10000, 50000 }).samples(1000);
+
+static void bench_trait4_add(picobench::state& s)
+{
+    Square square;
+    Addable4 taddable(square);
+    s.set_result((uintptr_t)&taddable);
+    
+    for (auto _ : s) {
+        trait4_add(taddable);
+    }
+}
+PICOBENCH(bench_trait4_add).iterations({ 1000, 10000, 50000 }).samples(1000);
+
+static void bench_trait5_add(picobench::state& s)
+{
+    Square square;
+    Addable5 taddable(square);
+    s.set_result((uintptr_t)&taddable);
+    
+    for (auto _ : s) {
+        trait5_add(taddable);
+    }
+}
+PICOBENCH(bench_trait5_add).iterations({ 1000, 10000, 50000 }).samples(1000);

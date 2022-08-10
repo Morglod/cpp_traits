@@ -14,4 +14,5 @@ add_executable(example0 ./example0.cpp)
 add_executable(example1_base ./example1_base.cpp)
 add_executable(example2_get_ptr ./example2_get_ptr.cpp)
 add_executable(example3_shared_ptr ./example3_shared_ptr.cpp)
-# add_executable(benchmark ./benchmark.cpp)
+
+add_executable(benchmark ./benchmark.cpp ./benchmark_impl.cpp)
