@@ -50,36 +50,21 @@
 #define __TRAIT_METHOD_PICK_ARGS(_ret, _name, ...) __VA_ARGS__
 #define _TRAIT_METHOD_PICK_ARGS(_trait_tuple_) __TRAIT_METHOD_PICK_ARGS _trait_tuple_
 
-#define _TRAIT_STRUCT_CONCEPT_METHOD_ARG1(_arg_type_) _arg_type_{}
-#define _TRAIT_STRUCT_CONCEPT_METHOD_ARGS_UNPACK(...) MACRO_MAP_LIST(_TRAIT_STRUCT_CONCEPT_METHOD_ARG1, __VA_ARGS__)
-#define _TRAIT_STRUCT_CONCEPT_METHOD_ARGS(_method_tuple_) _TRAIT_STRUCT_CONCEPT_METHOD_ARGS_UNPACK(_TRAIT_METHOD_PICK_ARGS(_method_tuple_))
+#define _TRAIT_STRUCT_METHOD_POINTER(_method_tuple_) \
+    _TRAIT_METHOD_PICK_RET(_method_tuple_) (* _TRAIT_METHOD_PICK_NAME(_method_tuple_)) (void* self _TRAIT_COMMA_IF_( _TRAIT_METHOD_PICK_ARGS(_method_tuple_) ) ) = \
+    [](void* self _TRAIT_COMMA_IF_( _TRAIT_NAMED_ARGS1_(_TRAIT_METHOD_PICK_ARGS(_method_tuple_)) ) ) { \
+        return ((T*)self)->_TRAIT_METHOD_PICK_NAME(_method_tuple_) ( _TRAIT_NAMED_ARGS2_(_TRAIT_METHOD_PICK_ARGS(_method_tuple_)) ); \
+    };
 
-#define _TRAIT_STRUCT_CONCEPT_METHOD(_method_tuple_) { t._TRAIT_METHOD_PICK_NAME(_method_tuple_) ( _TRAIT_STRUCT_CONCEPT_METHOD_ARGS(_method_tuple_) ) } -> std::convertible_to< _TRAIT_METHOD_PICK_RET(_method_tuple_) >;
+#define _TRAIT_STRUCT_METHOD_POINTER_NO_INIT(_method_tuple_) \
+    _TRAIT_METHOD_PICK_RET(_method_tuple_) (* _TRAIT_METHOD_PICK_NAME(_method_tuple_)) (void* self _TRAIT_COMMA_IF_( _TRAIT_METHOD_PICK_ARGS(_method_tuple_) ) );
 
-#define _TRAIT_STRUCT_METHOD_POINTER(_method_tuple_) _TRAIT_METHOD_PICK_RET(_method_tuple_) (* _TRAIT_METHOD_PICK_NAME(_method_tuple_)) (void* self _TRAIT_COMMA_IF_( _TRAIT_METHOD_PICK_ARGS(_method_tuple_) ) ) = [](void* self _TRAIT_COMMA_IF_( _TRAIT_NAMED_ARGS1_(_TRAIT_METHOD_PICK_ARGS(_method_tuple_)) ) ) { return ((T*)self)->_TRAIT_METHOD_PICK_NAME(_method_tuple_) ( _TRAIT_NAMED_ARGS2_(_TRAIT_METHOD_PICK_ARGS(_method_tuple_)) ); };
-#define _TRAIT_STRUCT_METHOD_POINTER_NO_INIT(_method_tuple_) _TRAIT_METHOD_PICK_RET(_method_tuple_) (* _TRAIT_METHOD_PICK_NAME(_method_tuple_)) (void* self _TRAIT_COMMA_IF_( _TRAIT_METHOD_PICK_ARGS(_method_tuple_) ) );
+#define _TRAIT_STRUCT_PROXY_METHOD(_method_tuple_) \
+    inline _TRAIT_METHOD_PICK_RET(_method_tuple_) _TRAIT_METHOD_PICK_NAME(_method_tuple_) ( _TRAIT_NAMED_ARGS1_(_TRAIT_METHOD_PICK_ARGS(_method_tuple_)) ) { \
+        return _impl-> _TRAIT_METHOD_PICK_NAME(_method_tuple_) (_get_self() _TRAIT_COMMA_IF_( _TRAIT_NAMED_ARGS2_(_TRAIT_METHOD_PICK_ARGS(_method_tuple_)) ) ); \
+    }
 
-#define _TRAIT_STRUCT_PROXY_METHOD(_method_tuple_) inline _TRAIT_METHOD_PICK_RET(_method_tuple_) _TRAIT_METHOD_PICK_NAME(_method_tuple_) ( _TRAIT_NAMED_ARGS1_(_TRAIT_METHOD_PICK_ARGS(_method_tuple_)) ) { return _impl-> _TRAIT_METHOD_PICK_NAME(_method_tuple_) (self _TRAIT_COMMA_IF_( _TRAIT_NAMED_ARGS2_(_TRAIT_METHOD_PICK_ARGS(_method_tuple_)) ) ); }
-
-// #define TRAIT_STRUCT_CONCEPT(_NAME, ...) \
-//     template<typename T> \
-//     concept Concept##_NAME = requires (T t) { \
-//         MACRO_MAP(_TRAIT_STRUCT_CONCEPT_METHOD, __VA_ARGS__) \
-//     }; \
-//     struct _NAME { \
-//         void* self; \
-//         _NAME() = delete; \
-//         MACRO_MAP(_TRAIT_STRUCT_PROXY_METHOD, __VA_ARGS__) \
-//         template<Concept##_NAME T> \
-//         _NAME(T& t) : _NAME(&t) { \
-//             MACRO_MAP(_TRAIT_STRUCT_METHOD_POINTER_INIT, __VA_ARGS__) \
-//         } \
-//     private: \
-//         inline _NAME(void* _self): self(_self) {} \
-//         MACRO_MAP(_TRAIT_STRUCT_METHOD_POINTER, __VA_ARGS__) \
-//     };
-
-#define TRAIT_STRUCT(_NAME, ...) \
+#define _TRAIT_STRUCT_BASE(_NAME, ...) \
     template<typename T> \
     struct _NAME##_impl_T { \
         MACRO_MAP(_TRAIT_STRUCT_METHOD_POINTER, __VA_ARGS__) \
@@ -88,6 +73,7 @@
         MACRO_MAP(_TRAIT_STRUCT_METHOD_POINTER_NO_INIT, __VA_ARGS__) \
     }; \
     struct _NAME { \
+        using SelfPtr = void*; \
         void* self = nullptr; \
         _NAME() = delete; \
         MACRO_MAP(_TRAIT_STRUCT_PROXY_METHOD, __VA_ARGS__) \
@@ -97,5 +83,38 @@
             _impl = (_NAME##_impl*)(void*)&impl; \
         } \
     private: \
+        inline void* _get_self() { return self; } \
         _NAME##_impl* _impl; \
     };
+
+#define _TRAIT_STRUCT_PTR(_NAME, ...) \
+    struct _NAME##_ptr { \
+        using SelfPtr = std::shared_ptr<void>; \
+        std::shared_ptr<void> self = nullptr; \
+        MACRO_MAP(_TRAIT_STRUCT_PROXY_METHOD, __VA_ARGS__) \
+        _NAME##_ptr() = default; \
+        template<typename T> \
+        _NAME##_ptr(typename std::shared_ptr<T> const& t) : self(std::reinterpret_pointer_cast<void>(t)) { \
+            static _NAME##_impl_T<T> impl; \
+            _impl = (_NAME##_impl*)(void*)&impl; \
+        } \
+    private: \
+        inline void* _get_self() { return self.get(); } \
+        _NAME##_impl* _impl = nullptr; \
+    };
+
+#ifdef _MEMORY_
+    #define TRAITS_SHARED_PTR
+#endif
+
+#ifdef TRAITS_SHARED_PTR
+
+#define TRAIT_STRUCT(_NAME, ...) \
+    _TRAIT_STRUCT_BASE(_NAME, __VA_ARGS__) \
+    _TRAIT_STRUCT_PTR(_NAME, __VA_ARGS__)
+
+#else
+
+#define TRAIT_STRUCT(_NAME, ...) _TRAIT_STRUCT_BASE(_NAME, __VA_ARGS__)
+
+#endif

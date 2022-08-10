@@ -1,4 +1,5 @@
 #include "../traits.hpp"
+#include <stdio.h>
 
 struct Square {
     int id = 0;
