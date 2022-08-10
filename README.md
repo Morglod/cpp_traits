@@ -1,10 +1,6 @@
 # Traits
 
-Use traits without initial struct modifications and templates
-
-"Trait" structure would hold pointer to initial object & pointer to implementation
-
-static cost will be: 1 pointer per method per type
+Use traits without any struct modifications & templates!
 
 ```cpp
 struct Square {
@@ -36,6 +32,9 @@ template<typename T> Addable(T& t);
 ```
 
 Which saves pointer to T and picks specific trait's implementation for type T.
+
+"Trait" structure will hold pointer to initial object & pointer to implementation  
+static cost will be: 1 pointer per method per type
 
 ### Build example
 
