@@ -50,9 +50,11 @@
 #define __TRAIT_METHOD_PICK_ARGS(_ret, _name, ...) __VA_ARGS__
 #define _TRAIT_METHOD_PICK_ARGS(_trait_tuple_) __TRAIT_METHOD_PICK_ARGS _trait_tuple_
 
-#define _TRAIT_STRUCT_METHOD_POINTER(_method_tuple_) \
-    _TRAIT_METHOD_PICK_RET(_method_tuple_) (* _TRAIT_METHOD_PICK_NAME(_method_tuple_)) (void* self _TRAIT_COMMA_IF_( _TRAIT_METHOD_PICK_ARGS(_method_tuple_) ) ) = \
-    [](void* self _TRAIT_COMMA_IF_( _TRAIT_NAMED_ARGS1_(_TRAIT_METHOD_PICK_ARGS(_method_tuple_)) ) ) { \
+#define _TRAIT_STRUCT_METHOD_POINTER_MEMBER(_method_tuple_) \
+    _TRAIT_METHOD_PICK_RET(_method_tuple_) (* _TRAIT_METHOD_PICK_NAME(_method_tuple_)) (void* self _TRAIT_COMMA_IF_( _TRAIT_METHOD_PICK_ARGS(_method_tuple_) ) ) = &Self::_TRAIT_STRUCT_CONCAT(static_, _TRAIT_METHOD_PICK_NAME(_method_tuple_));
+
+#define _TRAIT_STRUCT_METHOD_POINTER_STATIC(_method_tuple_) \
+    static _TRAIT_METHOD_PICK_RET(_method_tuple_) _TRAIT_STRUCT_CONCAT(static_, _TRAIT_METHOD_PICK_NAME(_method_tuple_)) (void* self _TRAIT_COMMA_IF_( _TRAIT_NAMED_ARGS1_(_TRAIT_METHOD_PICK_ARGS(_method_tuple_)) ) ) { \
         return ((T*)self)->_TRAIT_METHOD_PICK_NAME(_method_tuple_) ( _TRAIT_NAMED_ARGS2_(_TRAIT_METHOD_PICK_ARGS(_method_tuple_)) ); \
     };
 
@@ -67,13 +69,14 @@
 #define _TRAIT_STRUCT_BASE(_NAME, ...) \
     template<typename T> \
     struct _NAME##_impl_T { \
-        MACRO_MAP(_TRAIT_STRUCT_METHOD_POINTER, __VA_ARGS__) \
+        using Self = _NAME##_impl_T<T>; \
+        MACRO_MAP(_TRAIT_STRUCT_METHOD_POINTER_MEMBER, __VA_ARGS__) \
+        MACRO_MAP(_TRAIT_STRUCT_METHOD_POINTER_STATIC, __VA_ARGS__) \
     }; \
     struct _NAME##_impl { \
         MACRO_MAP(_TRAIT_STRUCT_METHOD_POINTER_NO_INIT, __VA_ARGS__) \
     }; \
     struct _NAME { \
-        using SelfPtr = void*; \
         void* self = nullptr; \
         _NAME() = delete; \
         MACRO_MAP(_TRAIT_STRUCT_PROXY_METHOD, __VA_ARGS__) \
@@ -89,7 +92,6 @@
 
 #define _TRAIT_STRUCT_PTR(_NAME, ...) \
     struct _NAME##_ptr { \
-        using SelfPtr = std::shared_ptr<void>; \
         std::shared_ptr<void> self = nullptr; \
         MACRO_MAP(_TRAIT_STRUCT_PROXY_METHOD, __VA_ARGS__) \
         _NAME##_ptr() = default; \

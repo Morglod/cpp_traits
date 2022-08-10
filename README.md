@@ -36,6 +36,15 @@ Which saves pointer to T and picks specific trait's implementation for type T.
 "Trait" structure will hold pointer to initial object & pointer to implementation  
 static cost will be: 1 pointer per method per type
 
+### Performance
+
+https://quick-bench.com/q/4xOCNLsrgt_TDeF9k-hxv_mUdLw
+
+Method call:
+* GCC 11.2 -O3   virtual call is 20% faster
+* Clang 13 -O3   equal to virtual call
+* MSVC 2022      +- same as virtual call
+
 ### Build example
 
 Run `example/build.cmd / sh` or use `example/CMakeLists.txt`
@@ -52,32 +61,29 @@ Trait structure under macro:
 ```cpp
 template <typename T>
 struct Addable_impl_T {
-    void (*add)(void *self, int) = [](void *self, int _1) {
-        return ((T *)self)->add(_1);
-    };
+  using Self = Addable_impl_T<T>;
+  void (*add)(void *self, int) = &Self::static_add;
+  static void static_add(void *self, int _1) { return ((T *)self)->add(_1); };
 };
 
 struct Addable_impl {
-    void (*add)(void *self, int);
+  void (*add)(void *self, int);
 };
 
 struct Addable {
-    void *self = nullptr;
+  void *self = nullptr;
+  Addable() = delete;
+  inline void add(int _1) { return _impl->add(_get_self(), _1); }
 
-    Addable() = delete;
-
-    inline void add(int _1) {
-        return _impl->add(self, _1);
-    }
-
-    template <typename T>
-    Addable(T &t) : self(&t) {
-        static Addable_impl_T<T> impl;
-        _impl = (Addable_impl *)(void *)&impl;
-    }
+  template <typename T>
+  Addable(T &t) : self(&t) {
+    static Addable_impl_T<T> impl;
+    _impl = (Addable_impl *)(void *)&impl;
+  }
 
 private:
-    Addable_impl *_impl;
+  inline void *_get_self() { return self; }
+  Addable_impl *_impl;
 };
 ```
 
@@ -165,8 +171,10 @@ void do_stuff() {
 ---
 
 ## Requirements
-* `__VA_OPT__` (tested currently on C++20 only)
+
+* `__VA_OPT__` (currently for C++20 only)
 
 ## todo
 
-* Benchmarks
+* Remove `__VA_OPT__`, than C++11 may be supported
+* More benchmarks & tests
