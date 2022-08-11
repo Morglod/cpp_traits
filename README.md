@@ -133,17 +133,17 @@ void do_stuff() {
 </summary>
 
 ```cpp
-#define TRAITS_SHARED_PTR
+#define TRAITS_SHARED_PTR // <--------------------- add shared_ptr
+#include <memory>        // <---------------- or just simply include <memory> before traits
 #include "traits.hpp"
 
-struct MyObject : public std::enable_shared_from_this<MyObject> {
-    inline std::shared_ptr<void> get_ptr() {
-        return shared_from_this(); // comes from enable_shared_from_this
-    }
+struct Storage {
+    char* _data;
+    void print();
 };
 
 TRAIT_STRUCT(DataHandler,
-    TRAIT_METHOD(std::shared_ptr<void>, get_ptr)
+    TRAIT_METHOD(void, print)
 )
 
 void take_data(DataHandler_ptr dh) { // <------ we use _ptr version here which stores shared_ptr as self

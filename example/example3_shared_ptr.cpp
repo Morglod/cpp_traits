@@ -8,11 +8,9 @@
 
 namespace {
 
-    struct Storage : std::enable_shared_from_this<Storage> {
+    struct Storage {
         char* _data;
         char* data();
-
-        inline std::shared_ptr<void> get_ptr() { return shared_from_this(); }
 
         void print() {
             printf("Storage: %s\n", _data);
@@ -26,8 +24,7 @@ namespace {
     };
 
     TRAIT_STRUCT(DataHandler,
-        TRAIT_METHOD(void, print),
-        TRAIT_METHOD(std::shared_ptr<void>, get_ptr)
+        TRAIT_METHOD(void, print)
     )
 
     DataHandler_ptr take_data(DataHandler_ptr dh) {
