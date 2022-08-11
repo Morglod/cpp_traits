@@ -1,6 +1,6 @@
 # Traits
 
-Use traits without any struct modifications & templates!
+Use rust-like traits without any struct modifications & templates!
 
 ```cpp
 struct Square {
