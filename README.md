@@ -38,7 +38,7 @@ static cost will be: 1 pointer per method per type
 
 ### Performance
 
-https://quick-bench.com/q/bkq-_thohnzxooyR7jmMzecy1sA
+https://quick-bench.com/q/RRZUoW5AVvuqjyzKvL_O2B5gU0E
 
 Method call:
 * GCC 11.2 -O3   virtual call is 10% faster
