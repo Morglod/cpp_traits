@@ -25,6 +25,8 @@ int main() {
 
 ### How it works
 
+Basic traits may be used as type-erased references. To store values, use shared_ptr version.
+
 In example above, `Addable` type has constructor:
 
 ```cpp
@@ -146,7 +148,7 @@ TRAIT_STRUCT(DataHandler,
     TRAIT_METHOD(void, print)
 )
 
-void take_data(DataHandler_ptr dh) { // <------ we use _ptr version here which stores shared_ptr as self
+DataHandler_ptr take_data(DataHandler_ptr dh) { // <------ we use _ptr version here which stores shared_ptr as self
     return dh;
 }
 
